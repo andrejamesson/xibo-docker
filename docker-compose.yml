@@ -3,6 +3,8 @@ version: "2.1"
 services:
     cms-db:
         image: mysql:8.0
+        # ATENÇÃO: Verifique a documentação do Dokploy sobre Volumes Persistentes.
+        # Se for necessário um caminho específico (ex: ../files/db), altere aqui.
         volumes:
             - "./shared/db:/var/lib/mysql:Z"
         environment:
@@ -12,15 +14,21 @@ services:
         mem_limit: 1g
         env_file: config.env
         restart: always
+
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
         ports:
+            # Manter a porta XMR (9505) se você for usá-la. 
+            # Verifique se o Dokploy permite este mapeamento direto.
             - "9505:9505"
         restart: always
         mem_limit: 256m
         env_file: config.env
+        
     cms-web:
         image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
+        # ATENÇÃO: Verifique a documentação do Dokploy sobre Volumes Persistentes.
+        # Se for necessário um caminho específico (ex: ../files/cms), altere aqui.
         volumes:
             - "./shared/cms/custom:/var/www/cms/custom:Z"
             - "./shared/backup:/var/www/backup:Z"
@@ -35,14 +43,25 @@ services:
             - CMS_USE_MEMCACHED=true
             - MEMCACHED_HOST=cms-memcached
         env_file: config.env
-        ports:
-            - "80:80"
+        
+        # REMOVEMOS: a linha ports: - "80:80" pois o Dokploy/Traefik cuidará disso.
+        
+        # 🌟 CONFIGURAÇÃO CRÍTICA PARA O DOKPLOY/TRAEFIK (ADICIONADA) 🌟
+        labels:
+            - "traefik.enable=true" 
+            - "traefik.http.routers.xibo-cms.rule=Host(`cms.andretec.com`)" 
+            - "traefik.http.routers.xibo-cms.entrypoint=websecure" 
+            - "traefik.http.routers.xibo-cms.tls.certresolver=letsencrypt" 
+            - "traefik.http.services.xibo-cms.loadbalancer.server.port=80"
+            
         mem_limit: 1g
+
     cms-memcached:
         image: memcached:alpine
         command: memcached -m 15
         restart: always
         mem_limit: 100M
+        
     cms-quickchart:
-      image: ianw/quickchart
-      restart: always
+        image: ianw/quickchart
+        restart: always
