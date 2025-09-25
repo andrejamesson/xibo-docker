@@ -14,21 +14,23 @@ services:
         mem_limit: 1g
         env_file: config.env
         restart: always
-
+        networks:
+            - dokploy-network  # Adicionado a rede Dokploy
+            
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
         ports:
-            # Manter a porta XMR (9505) se você for usá-la. 
-            # Verifique se o Dokploy permite este mapeamento direto.
+            # Manter a porta XMR (9505) se você for usá-la.
             - "9505:9505"
         restart: always
         mem_limit: 256m
         env_file: config.env
-        
+        networks:
+            - dokploy-network  # Adicionado a rede Dokploy
+            
     cms-web:
         image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
         # ATENÇÃO: Verifique a documentação do Dokploy sobre Volumes Persistentes.
-        # Se for necessário um caminho específico (ex: ../files/cms), altere aqui.
         volumes:
             - "./shared/cms/custom:/var/www/cms/custom:Z"
             - "./shared/backup:/var/www/backup:Z"
@@ -44,9 +46,7 @@ services:
             - MEMCACHED_HOST=cms-memcached
         env_file: config.env
         
-        # REMOVEMOS: a linha ports: - "80:80" pois o Dokploy/Traefik cuidará disso.
-        
-        # 🌟 CONFIGURAÇÃO CRÍTICA PARA O DOKPLOY/TRAEFIK (ADICIONADA) 🌟
+        # 🌟 CONFIGURAÇÃO CRÍTICA PARA O DOKPLOY/TRAEFIK (INDENTAÇÃO CORRIGIDA) 🌟
         labels:
             - "traefik.enable=true" 
             - "traefik.http.routers.xibo-cms.rule=Host(`cms.andretec.com`)" 
@@ -55,13 +55,24 @@ services:
             - "traefik.http.services.xibo-cms.loadbalancer.server.port=80"
             
         mem_limit: 1g
+        networks:
+            - dokploy-network  # Adicionado a rede Dokploy
 
     cms-memcached:
         image: memcached:alpine
         command: memcached -m 15
         restart: always
         mem_limit: 100M
-        
+        networks:
+            - dokploy-network  # Adicionado a rede Dokploy
+            
     cms-quickchart:
         image: ianw/quickchart
         restart: always
+        networks:
+            - dokploy-network  # Adicionado a rede Dokploy
+
+# 🌟 Definição da Rede Externa (Obrigatória no Dokploy) 🌟
+networks:
+    dokploy-network:
+        external: true
