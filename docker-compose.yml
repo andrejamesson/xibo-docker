@@ -1,7 +1,6 @@
 services:
     cms-db:
         image: mysql:8.0
-        # ATENÇÃO: Verifique a documentação do Dokploy sobre Volumes Persistentes.
         volumes:
             - "./shared/db:/var/lib/mysql:Z"
         environment:
@@ -11,23 +10,19 @@ services:
         mem_limit: 1g
         env_file: config.env
         restart: always
-        networks:
-            - dokploy-network
+        # ❌ Redes removidas
 
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
         ports:
-            # Manter a porta XMR (9505) é necessário para comunicação interna/externa de Players
             - "9505:9505"
         restart: always
         mem_limit: 256m
         env_file: config.env
-        networks:
-            - dokploy-network
+        # ❌ Redes removidas
 
     cms-web:
         image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
-        # ATENÇÃO: Verifique a documentação do Dokploy sobre Volumes Persistentes.
         volumes:
             - "./shared/cms/custom:/var/www/cms/custom:Z"
             - "./shared/backup:/var/www/backup:Z"
@@ -37,34 +32,29 @@ services:
             - "./shared/cms/ca-certs:/var/www/cms/ca-certs:Z"
             
         restart: always
-        # DEPENDS_ON removido para evitar conflitos de rede/inicialização
+        # DEPENDS_ON removido para simplificar
         
         environment:
             - MYSQL_HOST=cms-db
             - XMR_HOST=cms-xmr
             - CMS_USE_MEMCACHED=true
             - MEMCACHED_HOST=cms-memcached
+            - CMS_DB_WAIT=300  # ⬅️ ADICIONADO: Força o CMS a esperar 300 segundos (5 minutos) pelo MySQL
         env_file: config.env
             
         mem_limit: 1g
-        networks:
-            - dokploy-network
+        # ❌ Redes removidas
 
     cms-memcached:
         image: memcached:alpine
         command: memcached -m 15
         restart: always
         mem_limit: 100M
-        networks:
-            - dokploy-network
+        # ❌ Redes removidas
 
     cms-quickchart:
         image: ianw/quickchart
         restart: always
-        networks:
-            - dokploy-network
+        # ❌ Redes removidas
 
-# 🌟 Definição da Rede Externa (Crucial para o Dokploy) 🌟
-networks:
-    dokploy-network:
-        external: true
+# ❌ REMOVIDO TODO O BLOCO NETWORKS ❌
