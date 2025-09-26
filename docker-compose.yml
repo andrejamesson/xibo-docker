@@ -1,9 +1,8 @@
 services:
     cms-db:
         image: mysql:8.0
-        # CORREÇÃO: Removida a flag Z, deixando apenas o caminho
         volumes:
-            - "./shared/db:/var/lib/mysql" 
+            - "./shared/db:/var/lib/mysql"
         environment:
             - MYSQL_DATABASE=cms
             - MYSQL_USER=cms
@@ -11,6 +10,9 @@ services:
         mem_limit: 1g
         env_file: config.env
         restart: always
+        networks:
+            cms_network:
+                ipv4_address: 172.20.0.10 # ⬅️ IP Estático para o DB
 
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
@@ -19,6 +21,8 @@ services:
         restart: always
         mem_limit: 256m
         env_file: config.env
+        networks:
+            - cms_network
 
     cms-web:
         image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
@@ -33,7 +37,7 @@ services:
         restart: always
         
         environment:
-            - MYSQL_HOST=cms-db
+            - MYSQL_HOST=172.20.0.10 # ⬅️ Novo Host é o IP Estático
             - XMR_HOST=cms-xmr
             - CMS_USE_MEMCACHED=true
             - MEMCACHED_HOST=cms-memcached
@@ -41,15 +45,26 @@ services:
         env_file: config.env
             
         mem_limit: 1g
+        networks:
+            - cms_network
 
     cms-memcached:
         image: memcached:alpine
         command: memcached -m 15
         restart: always
         mem_limit: 100M
+        networks:
+            - cms_network
 
     cms-quickchart:
         image: ianw/quickchart
         restart: always
+        networks:
+            - cms_network
 
-# SEM BLOCO NETWORKS
+# 🌟 Definição da Nova Rede com Sub-rede Fixa 🌟
+networks:
+    cms_network:
+        ipam:
+            config:
+                - subnet: 172.20.0.0/24
