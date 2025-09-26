@@ -8,14 +8,11 @@ services:
             - MYSQL_DATABASE=cms
             - MYSQL_USER=cms
             - MYSQL_RANDOM_ROOT_PASSWORD=yes
-        
-        # ❌ HEALTHCHECK REMOVIDO ❌
-        # O CMS irá esperar o banco de dados internamente.
-            
         mem_limit: 1g
         env_file: config.env
-        restart: always # <-- VOLTOU PARA 'always'
-        # Redes e Ports removidos para usar a configuração padrão do Dokploy
+        restart: always
+        networks:
+            - dokploy-network
 
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
@@ -25,7 +22,8 @@ services:
         restart: always
         mem_limit: 256m
         env_file: config.env
-        # Redes removidas
+        networks:
+            - dokploy-network
 
     cms-web:
         image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
@@ -38,16 +36,9 @@ services:
             - "./shared/cms/web/userscripts:/var/www/cms/web/userscripts:Z"
             - "./shared/cms/ca-certs:/var/www/cms/ca-certs:Z"
             
-        # 🌟 AJUSTADO RESTART E DEPENDS_ON 🌟
-        restart: always # <-- VOLTOU PARA 'always'
-        depends_on:
-            cms-db:
-                condition: service_started # <-- AGORA ESPERA APENAS INICIAR
-            cms-xmr:
-                condition: service_started
-            cms-memcached:
-                condition: service_started
-
+        restart: always
+        # DEPENDS_ON removido para evitar conflitos de rede/inicialização
+        
         environment:
             - MYSQL_HOST=cms-db
             - XMR_HOST=cms-xmr
@@ -56,16 +47,24 @@ services:
         env_file: config.env
             
         mem_limit: 1g
-        # Redes removidas
+        networks:
+            - dokploy-network
 
     cms-memcached:
         image: memcached:alpine
         command: memcached -m 15
         restart: always
         mem_limit: 100M
-        # Redes removidas
+        networks:
+            - dokploy-network
 
     cms-quickchart:
         image: ianw/quickchart
         restart: always
-        # Redes removidas
+        networks:
+            - dokploy-network
+
+# 🌟 Definição da Rede Externa (Crucial para o Dokploy) 🌟
+networks:
+    dokploy-network:
+        external: true
