@@ -9,15 +9,12 @@ services:
             - MYSQL_USER=cms
             - MYSQL_RANDOM_ROOT_PASSWORD=yes
         
-        # 🌟 ADICIONADO HEALTHCHECK 🌟
-        healthcheck:
-            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-            timeout: 20s
-            retries: 10
+        # ❌ HEALTHCHECK REMOVIDO ❌
+        # O CMS irá esperar o banco de dados internamente.
             
         mem_limit: 1g
         env_file: config.env
-        restart: always
+        restart: always # <-- VOLTOU PARA 'always'
         # Redes e Ports removidos para usar a configuração padrão do Dokploy
 
     cms-xmr:
@@ -41,11 +38,11 @@ services:
             - "./shared/cms/web/userscripts:/var/www/cms/web/userscripts:Z"
             - "./shared/cms/ca-certs:/var/www/cms/ca-certs:Z"
             
-        # 🌟 AJUSTADO RESTART E ADICIONADO DEPENDS_ON 🌟
-        restart: on-failure # Reinicia apenas se houver falha (mais seguro com healthcheck)
+        # 🌟 AJUSTADO RESTART E DEPENDS_ON 🌟
+        restart: always # <-- VOLTOU PARA 'always'
         depends_on:
             cms-db:
-                condition: service_healthy # Espera o MySQL passar no healthcheck
+                condition: service_started # <-- AGORA ESPERA APENAS INICIAR
             cms-xmr:
                 condition: service_started
             cms-memcached:
