@@ -1,8 +1,8 @@
 services:
     cms-db:
-        image: mysql:8.0
+        image: mysql:5.7 # ⬅️ MUDANÇA PRINCIPAL: MySQL 5.7 (mais estável e rápido para inicialização Docker)
         volumes:
-            - "./shared/db:/var/lib/mysql"
+            - "./shared/db:/var/lib/mysql" # ⬅️ Volume sem :Z
         environment:
             - MYSQL_DATABASE=cms
             - MYSQL_USER=cms
@@ -12,7 +12,7 @@ services:
         restart: always
         networks:
             cms_network:
-                ipv4_address: 172.20.0.10 # ⬅️ IP Estático para o DB
+                ipv4_address: 172.20.0.10 # ⬅️ IP Estático para contornar falha de DNS
 
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
@@ -37,11 +37,11 @@ services:
         restart: always
         
         environment:
-            - MYSQL_HOST=172.20.0.10 # ⬅️ Novo Host é o IP Estático
+            - MYSQL_HOST=172.20.0.10 # ⬅️ Host é o IP Estático
             - XMR_HOST=cms-xmr
             - CMS_USE_MEMCACHED=true
             - MEMCACHED_HOST=cms-memcached
-            - CMS_DB_WAIT=300
+            - CMS_DB_WAIT=300 # ⬅️ Mantendo a espera de 5 minutos, por segurança
         env_file: config.env
             
         mem_limit: 1g
