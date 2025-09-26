@@ -1,8 +1,9 @@
 services:
     cms-db:
         image: mysql:8.0
+        # CORREÇÃO: Removida a flag Z, deixando apenas o caminho
         volumes:
-            - "./shared/db:/var/lib/mysql:Z"
+            - "./shared/db:/var/lib/mysql" 
         environment:
             - MYSQL_DATABASE=cms
             - MYSQL_USER=cms
@@ -10,7 +11,6 @@ services:
         mem_limit: 1g
         env_file: config.env
         restart: always
-        # ❌ Redes removidas
 
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
@@ -19,7 +19,6 @@ services:
         restart: always
         mem_limit: 256m
         env_file: config.env
-        # ❌ Redes removidas
 
     cms-web:
         image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
@@ -32,29 +31,25 @@ services:
             - "./shared/cms/ca-certs:/var/www/cms/ca-certs:Z"
             
         restart: always
-        # DEPENDS_ON removido para simplificar
         
         environment:
             - MYSQL_HOST=cms-db
             - XMR_HOST=cms-xmr
             - CMS_USE_MEMCACHED=true
             - MEMCACHED_HOST=cms-memcached
-            - CMS_DB_WAIT=300  # ⬅️ ADICIONADO: Força o CMS a esperar 300 segundos (5 minutos) pelo MySQL
+            - CMS_DB_WAIT=300
         env_file: config.env
             
         mem_limit: 1g
-        # ❌ Redes removidas
 
     cms-memcached:
         image: memcached:alpine
         command: memcached -m 15
         restart: always
         mem_limit: 100M
-        # ❌ Redes removidas
 
     cms-quickchart:
         image: ianw/quickchart
         restart: always
-        # ❌ Redes removidas
 
-# ❌ REMOVIDO TODO O BLOCO NETWORKS ❌
+# SEM BLOCO NETWORKS
