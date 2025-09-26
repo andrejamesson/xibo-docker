@@ -2,7 +2,6 @@ services:
     cms-db:
         image: mysql:8.0
         # ATENÇÃO: Verifique a documentação do Dokploy sobre Volumes Persistentes.
-        # Se for necessário um caminho específico (ex: ../files/db), altere aqui.
         volumes:
             - "./shared/db:/var/lib/mysql:Z"
         environment:
@@ -12,20 +11,18 @@ services:
         mem_limit: 1g
         env_file: config.env
         restart: always
-        networks:
-            - dokploy-network  # Adicionado a rede Dokploy
-            
+        # Redes e Ports removidos para usar a configuração padrão do Dokploy
+
     cms-xmr:
         image: ghcr.io/xibosignage/xibo-xmr:1.0
         ports:
-            # Manter a porta XMR (9505) se você for usá-la.
+            # Manter a porta XMR (9505) é necessário para comunicação interna/externa de Players
             - "9505:9505"
         restart: always
         mem_limit: 256m
         env_file: config.env
-        networks:
-            - dokploy-network  # Adicionado a rede Dokploy
-            
+        # Redes removidas
+
     cms-web:
         image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
         # ATENÇÃO: Verifique a documentação do Dokploy sobre Volumes Persistentes.
@@ -44,33 +41,23 @@ services:
             - MEMCACHED_HOST=cms-memcached
         env_file: config.env
         
-        # 🌟 CONFIGURAÇÃO CRÍTICA PARA O DOKPLOY/TRAEFIK (INDENTAÇÃO CORRIGIDA) 🌟
-        labels:
-            - "traefik.enable=true" 
-            - "traefik.http.routers.xibo-cms.rule=Host(`cms.andretec.com`)" 
-            - "traefik.http.routers.xibo-cms.entrypoint=websecure" 
-            - "traefik.http.routers.xibo-cms.tls.certresolver=letsencrypt" 
-            - "traefik.http.services.xibo-cms.loadbalancer.server.port=80"
+        # 🌟 LABELS DO TRAEFIK REMOVIDOS! 🌟
+        # O roteamento será feito AGORA pela interface do Dokploy.
             
         mem_limit: 1g
-        networks:
-            - dokploy-network  # Adicionado a rede Dokploy
+        # Redes removidas
 
     cms-memcached:
         image: memcached:alpine
         command: memcached -m 15
         restart: always
         mem_limit: 100M
-        networks:
-            - dokploy-network  # Adicionado a rede Dokploy
-            
+        # Redes removidas
+
     cms-quickchart:
         image: ianw/quickchart
         restart: always
-        networks:
-            - dokploy-network  # Adicionado a rede Dokploy
+        # Redes removidas
 
-# 🌟 Definição da Rede Externa (Obrigatória no Dokploy) 🌟
-networks:
-    dokploy-network:
-        external: true
+# 🌟 SEÇÃO NETWORKS REMOVIDA 🌟
+# O Dokploy irá criar uma rede interna padrão automaticamente.
